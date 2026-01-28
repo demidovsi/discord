@@ -1,0 +1,13 @@
+# Config with secrets
+config.py
+
+# IDE
+.idea/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Claude
+.claude/
