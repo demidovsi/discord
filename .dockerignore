@@ -1,0 +1,10 @@
+.git
+.gitignore
+.idea
+.venv
+.claude
+__pycache__
+*.pyc
+other/
+config.py
+*.md

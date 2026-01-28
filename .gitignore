@@ -1,5 +1,6 @@
 # Config with secrets
 config.py
+deploy.sh
 
 # IDE
 .idea/
