@@ -10,7 +10,7 @@ import common
 import config
 from common import send_rest, write_log_db
 
-source = "custom_bot"
+source = "discord"
 
 async def insert_member(member, token=None):
     """
@@ -159,7 +159,6 @@ async def write_value_join_member(member, value, id=None, token=None, in_log=Fal
         "object_code": "discord_his_count_members",
         "values": {
             "date": date,
-            "count": 0,
             "count_join": 1 if value == 1 else 0,
             "count_remove": 1 if value == -1 else 0,
         }
