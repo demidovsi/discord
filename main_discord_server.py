@@ -15,22 +15,22 @@ version = '1.2.4 от 2026-01-28'
 
 
 # Health check HTTP сервер для Cloud Run
-class HealthHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.send_header('Content-type', 'text/plain')
-        self.end_headers()
-        self.wfile.write(b'OK')
-
-    def log_message(self, format, *args):
-        pass  # Отключаем логи HTTP запросов
-
-
-def start_health_server():
-    port = int(os.environ.get('PORT', 8080))
-    server = HTTPServer(('0.0.0.0', port), HealthHandler)
-    print(f'Health check сервер запущен на порту {port}')
-    server.serve_forever()
+# class HealthHandler(BaseHTTPRequestHandler):
+#     def do_GET(self):
+#         self.send_response(200)
+#         self.send_header('Content-type', 'text/plain')
+#         self.end_headers()
+#         self.wfile.write(b'OK')
+#
+#     def log_message(self, format, *args):
+#         pass  # Отключаем логи HTTP запросов
+#
+#
+# def start_health_server():
+#     port = int(os.environ.get('PORT', 8080))
+#     server = HTTPServer(('0.0.0.0', port), HealthHandler)
+#     print(f'Health check сервер запущен на порту {port}')
+#     server.serve_forever()
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -105,8 +105,8 @@ async def on_guild_channel_update(before, after):
 
 
 # Запуск health check сервера в отдельном потоке для Cloud Run
-health_thread = threading.Thread(target=start_health_server, daemon=True)
-health_thread.start()
+# health_thread = threading.Thread(target=start_health_server, daemon=True)
+# health_thread.start()
 
 common.write_log_db(
     '✈StartUp', common_bot.source, 'Старт бота работы с Discord \n' +
