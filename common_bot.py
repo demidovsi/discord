@@ -190,7 +190,7 @@ async def insert_status_member(member, token=None):
     at_date_time = datetime.datetime.utcnow().isoformat()
     values = {
         "member_id": str(member.id),
-        "display_name": member.display_name,
+        "sh_name": member.display_name,
         "status": member.status.value,  # 'online', 'offline', 'idle', 'dnd'
         "at_date_time": at_date_time,
     }
@@ -201,7 +201,7 @@ async def insert_status_member(member, token=None):
     }
 
     ans, is_ok, _ = await loop.run_in_executor(
-        None, lambda: send_rest("v2/entity", 'PUT', params=params, token_user=token))
+        None, lambda: send_rest("v3/entity", 'PUT', params=params, token_user=token))
     if not is_ok:
         # Логирование ошибки при записи данных участника в БД.
         await loop.run_in_executor(
@@ -345,7 +345,7 @@ async def insert_message(msg, token=None):
     except Exception as er:
         await loop.run_in_executor(
             None, lambda: write_log_db(
-                'Exception', 'discord', f'{er}', file_name=common.get_computer_name(), token=token, law_id='messages'
+                '❌Exception', 'discord', f'{er}', file_name=common.get_computer_name(), token=token, law_id='messages'
             )
         )
     return 0
@@ -381,7 +381,7 @@ async def insert_channel(channel, token=None):
     if not is_ok:
         await loop.run_in_executor(
             None, lambda:
-            write_log_db('Error', 'discord', f'❌ {ans}', file_name=common.get_computer_name(), token=token))
+            write_log_db('❌Error', 'discord', f'❌ {ans}', file_name=common.get_computer_name(), token=token))
     else:
         ans = json.loads(ans)
         if len(ans) > 0:
@@ -389,7 +389,7 @@ async def insert_channel(channel, token=None):
                 st = f'Канал [{channel.name}] успешно добавлен в базу данных'
                 await loop.run_in_executor(
                     None, lambda:
-                    write_log_db('✅ Новый канал', 'discord', st, file_name=common.get_computer_name(), token=token))
+                    write_log_db('➕ Новый канал', 'discord', st, file_name=common.get_computer_name(), token=token))
                 return True
     return False
 
@@ -407,4 +407,4 @@ async def delete_channel(channel, token=None):
     if not is_ok:
         await loop.run_in_executor(
             None, lambda:
-            write_log_db('Error', 'discord', f'❌ {ans}', file_name=common.get_computer_name(), token=token))
+            write_log_db('❌Error', 'discord', f'❌ {ans}', file_name=common.get_computer_name(), token=token))

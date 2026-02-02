@@ -170,7 +170,7 @@ def login_admin():
                     lang_admin = js['lang']
             else:
                 token = None
-                return txt, result, token
+                return txt, result, token, ''
         except Exception as err:
             txt = f'Error occurred: : {err}'
     return txt, result, token_admin, lang_admin
