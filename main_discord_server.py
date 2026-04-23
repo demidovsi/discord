@@ -1,7 +1,4 @@
 import time
-import os
-import threading
-from http.server import HTTPServer, BaseHTTPRequestHandler
 
 import discord
 from discord.ext import commands
@@ -11,7 +8,7 @@ import common
 import config
 
 
-version = '1.2.4 от 2026-01-28'
+version = '1.2.5 от 2026-04-23'
 
 
 # Health check HTTP сервер для Cloud Run
@@ -109,9 +106,17 @@ async def on_guild_channel_update(before, after):
 # health_thread.start()
 
 common.write_log_db(
-    '✈StartUp', common_bot.source, 'Старт бота работы с Discord \n' +
+    '🔥StartUp', common_bot.source, 'Старт бота работы с Discord \n' +
                              ' - version: ' + version +
                              '\n - host: ' + config.URL +
                              '\n - schema: ' + config.schema_name,
     file_name=common.get_computer_name())
-bot.run(config.discord_token)
+try:
+    bot.run(config.discord_token)
+finally:
+    common.write_log_db(
+        '🛑ShutDown', common_bot.source, 'Стоп бота \n' +
+                                 ' - version: ' + version +
+                                 '\n - host: ' + config.URL +
+                                 '\n - schema: ' + config.schema_name,
+        file_name=common.get_computer_name())

@@ -34,7 +34,7 @@ async def insert_member(member, token=None):
         "member_id": str(member.id),
         "sh_name": member.name,
         "display_name": member.display_name,
-        "bot": member.bot,
+        "bot": member.bot
     }
 
     try:
@@ -56,8 +56,8 @@ async def insert_member(member, token=None):
     if not is_ok:
         # Логирование ошибки при получении данных участника из БД.
         await loop.run_in_executor(
-        None, lambda: write_log_db('ERROR', source,
-            '❌ Ошибка при получении участника {} из БД: {}'.format(member.id, ans),
+        None, lambda: write_log_db('❌ ERROR', source,
+            'Ошибка при получении участника {} из БД: {}'.format(member.id, ans),
             file_name=common.get_computer_name(), token=token
         ))
         return None
@@ -74,16 +74,16 @@ async def insert_member(member, token=None):
             # Логирование ошибки при записи данных участника в БД.
             await loop.run_in_executor(
         None, lambda: write_log_db(
-                'ERROR', source,
-                '❌ Ошибка при записи участника {} в БД: {}'.format(member.id, ans),
+                '❌ ERROR', source,
+                'Ошибка при записи участника {} в БД: {}'.format(member.id, ans),
                 file_name=common.get_computer_name(), token=token
             ))
             return None
         else:
             await loop.run_in_executor(
                 None, lambda: write_log_db(
-                    'info', source,
-                    '😇 Новый участник {} {}'.format(member.id, member.display_name),
+                    '➕info', source,
+                    'Новый участник {} {}'.format(member.id, member.display_name),
                     file_name=common.get_computer_name(), token=token
                 ))
         ans = json.loads(ans)
@@ -122,7 +122,7 @@ async def write_value_join_member(member, value, id=None, token=None, in_log=Fal
     params = {"schema_name": config.schema_name, "object_code": "discord_members",
               "values": {
                   "remove": value == -1,
-                  "id": id,  # ID участника в БД.
+                  "id": id  # ID участника в БД.
               }}
     if value == -1:
         params["values"]["remove_at"] = datetime.datetime.utcnow().isoformat()
@@ -130,14 +130,14 @@ async def write_value_join_member(member, value, id=None, token=None, in_log=Fal
     ans, is_ok, _ = await loop.run_in_executor(None, lambda: send_rest('v2/entity', 'PUT', token_user=token, params=params))
     if not is_ok:
         await loop.run_in_executor(None, lambda: write_log_db(
-            'ERROR', source, f'❌ Ошибка при обновлении участника {member.id} {member.display_name} в БД: {ans}',
+            '❌ERROR', source, f' Ошибка при обновлении участника {member.id} {member.display_name} в БД: {ans}',
             file_name=common.get_computer_name(), token=token))
         return False
 
     if in_log:
         await loop.run_in_executor(None, lambda: write_log_db(
-            'INFO', source,
-            f'📌 Участник {member.id} {member.display_name} присоединился к серверу' if value == 1 else f'Участник {member.id} {member.display_name} покинул сервер',
+            '📌 INFO', source,
+            f'Участник {member.id} {member.display_name} присоединился к серверу' if value == 1 else f'Участник {member.id} {member.display_name} покинул сервер',
             file_name=common.get_computer_name(), token=token))
 
     # формируем запись в discord_his_count_members
@@ -160,7 +160,7 @@ async def write_value_join_member(member, value, id=None, token=None, in_log=Fal
         "values": {
             "date": date,
             "count_join": 1 if value == 1 else 0,
-            "count_remove": 1 if value == -1 else 0,
+            "count_remove": 1 if value == -1 else 0
         }
     }
     # ans = json.loads(ans)
@@ -174,7 +174,8 @@ async def write_value_join_member(member, value, id=None, token=None, in_log=Fal
     ans, is_ok, _ = await loop.run_in_executor(None, lambda: send_rest("v2/entity", 'PUT', params=params, token_user=token))
     if not is_ok:
         await loop.run_in_executor(None, lambda: write_log_db(
-            'ERROR', source, f'❌ Ошибка при создании истории кол-ва участников {member.id} в БД: {ans}',
+            '❌ ERROR', source, f'Ошибка при создании истории кол-ва участников {member.id} в БД: {ans}\n' +
+                               json.dumps(params, indent=4, ensure_ascii=False),
             file_name=common.get_computer_name(), token=token))
         return False
     return True
@@ -205,8 +206,8 @@ async def insert_status_member(member, token=None):
         # Логирование ошибки при записи данных участника в БД.
         await loop.run_in_executor(
         None, lambda: write_log_db(
-            'ERROR', source,
-            '❌ Ошибка при записи статуса участника {} в БД: {}'.format(member.id, ans),
+            '❌ ERROR', source,
+            'Ошибка при записи статуса участника {} в БД: {}'.format(member.id, ans),
             file_name=common.get_computer_name(), token=token
         ))
         return None
@@ -262,7 +263,7 @@ async def exist_message(message_id):
     if not is_ok:
         await loop.run_in_executor(
             None, lambda: write_log_db(
-                'Error', 'discord', f'❌ {ans}', file_name=common.get_computer_name(), law_id='messages'))
+                '❌ Error', 'discord', f'{ans}', file_name=common.get_computer_name(), law_id='messages'))
         return True  # лучше пропустим
     ans = json.loads(ans)
     if len(ans) > 0:
@@ -332,13 +333,13 @@ async def insert_message(msg, token=None):
         if not is_ok:
             await loop.run_in_executor(
                 None, lambda: write_log_db(
-                    'Error', 'discord', f'❌ {ans}', file_name=common.get_computer_name(), token=token, law_id='messages'
+                    '❌ Error', 'discord', f'{ans}', file_name=common.get_computer_name(), token=token, law_id='messages'
                 ))
             return 0
         else:
             await loop.run_in_executor(
                 None, lambda: write_log_db(
-                    'info', 'discord', f'Добавлено новое сообщение ' + str(msg.id),
+                    '➕info', 'discord', f'Добавлено новое сообщение ' + str(msg.id),
                     file_name=common.get_computer_name(), token=token, law_id='messages'))
             return 1
     except Exception as er:

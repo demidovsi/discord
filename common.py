@@ -60,10 +60,29 @@ def load_config_params(schema_name, name_function):
     return []
 
 
+_computer_name_cache = None
+
 def get_computer_name():
-    st = socket.gethostbyname(socket.gethostname())
-    st = '' if st == '127.0.0.1' else st
-    return socket.gethostname() + '; ' + st
+    global _computer_name_cache
+    if _computer_name_cache is not None:
+        return _computer_name_cache
+
+    hostname = socket.gethostname()
+    ip = socket.gethostbyname(hostname)
+    result = hostname + ('; ' + ip if ip != '127.0.0.1' else '')
+
+    try:
+        geo = requests.get('http://ip-api.com/json/', timeout=5).json()
+        city = geo.get('city', '')
+        country = geo.get('country', '')
+        location = ', '.join(filter(None, [city, country]))
+        if location:
+            result += '; ' + location
+    except Exception:
+        pass
+
+    _computer_name_cache = result
+    return _computer_name_cache
 
 
 def write_log_db(level, src, msg, schema_name='urban', page=None, file_name='', law_id='', td=None, write_to_db=True,
@@ -118,6 +137,12 @@ def write_log_db(level, src, msg, schema_name='urban', page=None, file_name='', 
         answer, is_ok, _ = send_rest('v2/execute', 'PUT', params=params, token_user=token)
 
         if not is_ok:
+            # токен мог протухнуть — инвалидируем кеш и повторяем один раз
+            _invalidate_admin_token()
+            _, retry_ok, new_token, _ = login_admin()
+            if retry_ok:
+                answer, is_ok, _ = send_rest('v2/execute', 'PUT', params=params, token_user=new_token)
+        if not is_ok:
             print(f"{time.ctime()} ERROR write_log_db {answer}", flush=True)
     else:
         print(f"{time.ctime()} ERROR write_log_db {answer}", flush=True)
@@ -143,7 +168,20 @@ def encode(key, text):
     return base64.urlsafe_b64encode("".join(enc).encode()).decode()
 
 
+_admin_token_cache = {'token': None, 'lang': '', 'expires_at': 0.0}
+
+
+def _invalidate_admin_token():
+    global _admin_token_cache
+    _admin_token_cache = {'token': None, 'lang': '', 'expires_at': 0.0}
+
+
 def login_admin():
+    global _admin_token_cache
+    now = time.time()
+    if _admin_token_cache['token'] and now < _admin_token_cache['expires_at']:
+        return '', True, _admin_token_cache['token'], _admin_token_cache['lang']
+
     result = False
     token_admin = ''
     lang_admin = ''
@@ -168,15 +206,15 @@ def login_admin():
                     token_admin = js["accessToken"]
                 if 'lang' in js:
                     lang_admin = js['lang']
+                _admin_token_cache = {'token': token_admin, 'lang': lang_admin, 'expires_at': now + 3000}
             else:
-                token = None
-                return txt, result, token, ''
+                return txt, result, None, ''
         except Exception as err:
             txt = f'Error occurred: : {err}'
     return txt, result, token_admin, lang_admin
 
 
-def send_rest(mes, directive="GET", params=None, lang='', token_user=None):
+def send_rest(mes, directive="GET", params=None, lang='', token_user=None, retries=3, retry_delay=1):
     js = {}
     if token_user is not None:
         js['token'] = token_user
@@ -193,17 +231,23 @@ def send_rest(mes, directive="GET", params=None, lang='', token_user=None):
         if type(params) is not str:
             params = json.dumps(params, ensure_ascii=False)
         js['params'] = params  # дополнительно заданные параметры
-    try:
-        headers = {"Accept": "application/json"}
-        response = requests.request(directive, config.URL + mes.replace(' ', '+'), headers=headers, json=js)
-    except HTTPError as err:
-        txt = f'HTTP error occurred: {err}'
-        return txt, False, None
-    except Exception as err:
-        txt = f'Other error occurred: {err}'
-        return txt, False, None
-    else:
-        return response.text, response.ok, '<' + str(response.status_code) + '> - ' + response.reason
+
+    headers = {"Accept": "application/json"}
+    url = config.URL + mes.replace(' ', '+')
+    last_err = ''
+    for attempt in range(retries):
+        try:
+            response = requests.request(directive, url, headers=headers, json=js, timeout=30)
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as err:
+            last_err = f'Network error (attempt {attempt + 1}/{retries}): {err}'
+            if attempt < retries - 1:
+                time.sleep(retry_delay)
+            continue
+        except Exception as err:
+            return f'Other error occurred: {err}', False, None
+        else:
+            return response.text, response.ok, '<' + str(response.status_code) + '> - ' + response.reason
+    return last_err, False, None
 
 
 def get_duration(td):
