@@ -190,7 +190,7 @@ def login_admin():
         headers = {"Accept": "application/json"}
         response = requests.request(
             'POST', config.URL + 'v1/login', headers=headers,
-            json={"params": txt_z}
+            json={"params": txt_z}, timeout=10
             )
     except HTTPError as err:
         txt = f'HTTP error occurred: {err}'

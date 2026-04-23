@@ -1,3 +1,4 @@
+import asyncio
 import time
 
 import discord
@@ -42,6 +43,14 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 @bot.event
 async def on_ready():
     print(time.ctime(), f'Запущен как {bot.user}')
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(None, lambda: common.write_log_db(
+        '🔥StartUp', common_bot.source,
+        'Старт бота работы с Discord \n'
+        ' - version: ' + version +
+        '\n - host: ' + config.URL +
+        '\n - schema: ' + config.schema_name,
+        file_name=common.get_computer_name()))
 
 @bot.event
 async def on_message(message):
@@ -105,12 +114,6 @@ async def on_guild_channel_update(before, after):
 # health_thread = threading.Thread(target=start_health_server, daemon=True)
 # health_thread.start()
 
-common.write_log_db(
-    '🔥StartUp', common_bot.source, 'Старт бота работы с Discord \n' +
-                             ' - version: ' + version +
-                             '\n - host: ' + config.URL +
-                             '\n - schema: ' + config.schema_name,
-    file_name=common.get_computer_name())
 try:
     bot.run(config.discord_token)
 finally:
